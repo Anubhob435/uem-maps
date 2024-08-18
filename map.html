@@ -20,15 +20,15 @@
         }
         .footer {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 10px 20px;
+            bottom: 5px;
+            right: 10px;
+
+            color: rgb(0, 0, 0);
+            padding: 5px 10px;
             font-size: 14px;
-            font-weight: 500;
-            border-radius: 30px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-weight: 800;
+            border-radius: 10px;
+
             backdrop-filter: blur(5px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             transition: all 0.3s ease;
@@ -85,13 +85,13 @@
         }
         #coordinates {
             position: absolute;
-            bottom: 20px;
+            bottom: 5px;
             left: 62%;
             transform: translateX(-50%);
             background-color: rgba(255, 255, 255, 0.9);
             color: #333;
-            padding: 10px 15px;
-            border-radius: 25px;
+            padding: 5px 10px;
+            border-radius: 20px;
             font-size: 14px;
             font-weight: bold;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -231,21 +231,21 @@
         }
 
         .fade {
-    opacity: 0;
-    transition: opacity 2s ease;
-}
+            opacity: 0;
+            transition: opacity 2s ease;
+        }
 
-#map, #side-panel {
-    opacity: 1;
-    transition: opacity 2s ease;
-}
+        #map, #side-panel {
+            opacity: 1;
+            transition: opacity 2s ease;
+        }
 
 
 
-#toggle-dark-mode:hover {
-    background-color: #555;
-    transform: scale(1.1);
-}
+        #toggle-dark-mode:hover {
+            background-color: #555;
+            transform: scale(1.1);
+        }
 
         #go-back-btn {
             position: fixed;
@@ -271,25 +271,25 @@
             transform: scale(1.1);
         }
         .uem-maps-btn {
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
-    background-color: #06101b;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 15px;
-    cursor: pointer;
-    transition: background-color 0.3s, transform 0.3s;
-    font-size: 12px;
-    width: auto; /* Override any width setting from side panel buttons */
-    margin-bottom: 0; /* Override any margin from side panel buttons */
-}
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background-color: #06101b;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+            font-size: 12px;
+            width: auto; /* Override any width setting from side panel buttons */
+            margin-bottom: 0; /* Override any margin from side panel buttons */
+        }
 
-.uem-maps-btn:hover {
-    background-color: #0056b3;
-    transform: scale(1.05);
-}
+        .uem-maps-btn:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body>
@@ -318,7 +318,7 @@
 
     <div id="coordinates"></div>
 
-    <script src="./OlaMapsWebSDK/olamaps-js-sdk.umd.js"></script>
+    <script src="/OlaMapsWebSDK/olamaps-js-sdk.umd.js"></script>
     <script src="script.js"></script>
     <script>
         const sidePanel = document.getElementById('side-panel');
