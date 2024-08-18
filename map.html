@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ola Maps Integration</title>
+    <link href="/OlaMapsWebSDK/style.css" rel="stylesheet" />
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            margin-left: 340px;
+            width: calc(100% - 340px);
+            height: 100%;
+            transition: margin-left 0.5s ease, width 0.4s ease;
+        }
+        .footer {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        .suggestions {
+            background-color: rgba(0, 0, 0, 0.8); /* Translucent white background */
+            max-height: 150px; /* Reduced height to make it smaller */
+            overflow-y: auto;
+            position: absolute;
+            top: 173px; /* Move the box 300px lower from its original position */
+            left: 10px;
+            width: calc(100% - 30px); /* Slightly reduced width for better fit */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            z-index: 1000;
+  
+        }
+        .suggestion-item {
+            padding: 8px 12px; /* Reduced padding for a smaller look */
+            cursor: pointer;
+            font-size: 13px; /* Slightly smaller font size */
+            transition: background-color 0.3s, color 0.3s;
+            color: #ffffff;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-item:hover,
+        .suggestion-item.active {
+            background-color: #f7f7f7;
+            color: #1a73e8;
+        }
+
+        /* Scrollbar styling for webkit browsers */
+        .suggestions::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .suggestions::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .suggestions::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        .suggestions::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        #coordinates {
+            position: absolute;
+            bottom: 20px;
+            left: 62%;
+            transform: translateX(-50%);
+            background-color: rgba(255, 255, 255, 0.9);
+            color: #333;
+            padding: 10px 15px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+        #coordinates:hover {
+            background-color: rgba(255, 255, 255, 1);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+            transform: translateX(-50%) translateY(-2px);
+        }
+        #animation-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 2s ease-out;
+            opacity: 1;
+        }
+        #animation-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .animation-text {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #333;
+        }
+        #side-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 300px;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(14, 45, 47, 0.7)), url('background.png');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+            color: white;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
+            z-index: 1001;
+            padding: 20px;
+            overflow-y: auto;
+            transform: translateX(0);
+            transition: transform 0.5s ease;
+        }
+
+        #side-panel.hidden {
+            transform: translateX(-100%);
+        }
+        #side-panel h2 {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        #side-panel input {
+            width: 90%;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: none;
+            border-radius: 25px;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            transition: background-color 0.3s;
+            padding-right: 10px;
+        }
+        #side-panel input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        #side-panel input:focus {
+            background-color: rgba(255, 255, 255, 0.3);
+            outline: none;
+        }
+        #side-panel button {
+            width: 50%;
+            margin-left: 75px;
+            margin-bottom: 30px;
+            margin-right: 8px;
+            padding: 8px;
+            border: none;
+            border-radius: 10px;
+            background-color: #0e9dc4;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+            font-size: 0.9em;
+        }
+        #side-panel button:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+        }
+        #toggle-panel-btn {
+            position: fixed;
+            top: 10px;
+            left: 295px;
+            z-index: 1002;
+            background-color: #333;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 50%;
+            transition: left 0.5s ease, transform 0.3s;
+            width: 40px;
+            height: px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #toggle-panel-btn:hover {
+            transform: scale(1.1);
+        }
+
+        #toggle-dark-mode {
+            position: fixed;
+            top: 180px;
+            right: 15px;
+            width: 40px;
+            height: 40px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+            z-index: 1001;
+        }
+
+        .fade {
+    opacity: 0;
+    transition: opacity 2s ease;
+}
+
+#map, #side-panel {
+    opacity: 1;
+    transition: opacity 2s ease;
+}
+
+
+
+#toggle-dark-mode:hover {
+    background-color: #555;
+    transform: scale(1.1);
+}
+
+        #go-back-btn {
+            position: fixed;
+            top: 130px;
+            right: 15px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #000000;
+            color: white;
+            border: none;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s, transform 0.3s;
+            z-index: 1000;
+        }
+        #go-back-btn:hover {
+            background-color: #000000;
+            transform: scale(1.1);
+        }
+        .uem-maps-btn {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background-color: #06101b;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s;
+    font-size: 12px;
+    width: auto; /* Override any width setting from side panel buttons */
+    margin-bottom: 0; /* Override any margin from side panel buttons */
+}
+
+.uem-maps-btn:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+}
+    </style>
+</head>
+<body>
+    <div id="animation-overlay">
+        <div class="animation-text">UEMxmaps</div>
+    </div>
+
+    <div id="side-panel">
+        <h2>Route Planner</h2>
+        <input type="text" id="autocomplete-input-1" placeholder="Destination 1">
+        <div id="suggestions-1" class="suggestions"></div>
+        <input type="text" id="autocomplete-input-2" placeholder="Destination 2">
+        <div id="suggestions-2" class="suggestions"></div>
+        <button id="calculate-route-btn">Calculate Route</button>
+        <button class="uem-maps-btn" onclick="window.location.href='index.html'">Home</button>
+    </div>
+
+    <button id="toggle-panel-btn">☰</button>
+    <button id="go-back-btn">O</button>
+    <button id="toggle-dark-mode" onclick="toggleMapStyle()">🌙</button>
+
+
+    <div id="map" style="display: none;"></div>
+
+    <div class="footer">IEM-UEM Group</div>
+
+    <div id="coordinates"></div>
+
+    <script src="/OlaMapsWebSDK/olamaps-js-sdk.umd.js"></script>
+    <script src="script.js"></script>
+    <script>
+        const sidePanel = document.getElementById('side-panel');
+        const togglePanelBtn = document.getElementById('toggle-panel-btn');
+        const map = document.getElementById('map');
+        const coordinates = document.getElementById('coordinates');
+
+        togglePanelBtn.addEventListener('click', () => {
+            sidePanel.classList.toggle('hidden');
+            if (sidePanel.classList.contains('hidden')) {
+                map.style.marginLeft = '0';
+                map.style.width = '100%';
+                map.style.transform = 'scale(1)';
+                map.style.transformOrigin = 'center';
+                togglePanelBtn.style.left = '10px';
+                togglePanelBtn.innerHTML = '☰';
+                coordinates.style.left = '50%';
+            } else {
+                map.style.marginLeft = '340px';
+                map.style.width = 'calc(100% - 340px)';
+                map.style.transform = 'scale(1)';
+                map.style.transformOrigin = 'left';
+                togglePanelBtn.style.left = '290px';
+                togglePanelBtn.innerHTML = '×';
+                coordinates.style.left = 'calc(50% + 170px)';
+            }
+        });
+    </script>
+</body>
+</html>
