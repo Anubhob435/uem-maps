@@ -84,12 +84,41 @@
     <div class="background-overlay"></div>
     <div class="login-container">
         <h2>Login</h2>
-        <form action="map.html">
-            <input type="text" placeholder="Username" required>
-            <input type="password" placeholder="Password" required>
+        <form id="loginForm">
+            <input type="text" id="username" placeholder="Username" required>
+            <input type="password" id="password" placeholder="Password" required>
             <input type="submit" value="Login">
         </form>
         <a href="index.html">Back to Home</a>
     </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            fetch('http://your-backend-server.com/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username: username, password: password }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Redirect to the map page if login is successful
+                    window.location.href = 'map.html';
+                } else {
+                    alert('Login failed: ' + data.message);
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
 </body>
 </html>

@@ -9,6 +9,7 @@ let for_coor1 = [];
 let for_coor2 = [];
 let startLocation, endLocation;
 
+
 const lightStyle = "https://api.olamaps.io/tiles/vector/v1/styles/default-light-standard/style.json";
 const darkStyle = "https://api.olamaps.io/tiles/vector/v1/styles/default-dark-standard/style.json";
 
@@ -34,32 +35,6 @@ function initializeMap(lat, lng) {
     myMap.dragRotate.enable(); // By default rotation is enabled
 
     // Add the line route to the map
-    myMap.on('load', () => {
-        myMap.addSource('route', {
-            type: 'geojson',
-            data: {
-                type: 'Feature',
-                properties: {},
-                geometry: {
-                    type: 'LineString',
-                    coordinates: [
-                        [88.48984775052655, 22.560128244259160],
-                        [88.48745859470952, 22.596744505519403],
-                    ]
-                },
-            },
-        });
-        myMap.addLayer({
-            id: 'route',
-            type: 'line',
-            source: 'route',
-            layout: { 'line-join': 'round', 'line-cap': 'round' },
-            paint: {
-                'line-color': '#f00',
-                'line-width': 4,
-            },
-        });
-    });
 
     draggableMarker = olaMaps
         .addMarker({
@@ -111,6 +86,24 @@ function initializeMap(lat, lng) {
       
     setupGoBackButton();
 }
+
+function writeCoordinatesToFile(coordinates) {
+    fetch('/save-coordinates', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(coordinates),
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Coordinates saved:', data);
+    })
+    .catch(error => {
+        console.error('Error saving coordinates:', error);
+    });
+}
+
 
 function toggleMapStyle() {
     const sidePanel = document.getElementById('side-panel');
@@ -182,78 +175,135 @@ function debounce(func, delay) {
     };
 }
 
+function calculateRoute(start, end) {
+    fetch('/calculate-route', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            origin: start,
+            destination: end
+        }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(`Distance: ${data.distance}, Duration: ${data.duration}`);
+        addRouteToMap(data.geometry);
+    })
+    .catch(error => {
+        console.error('Error calculating route:', error);
+    });
+}
+
 
 function handleAutocomplete(inputId, suggestionsId) {
     document.getElementById(inputId).addEventListener('input', debounce(function() {
-        const input = document.getElementById(inputId).value;
-        const apiKey = 'rxS3WOVB7zNbC0kvfLtpljJVa6lAqoIZpoqsytwU'; // Replace with your actual API key
-        const url = `https://api.olamaps.io/places/v1/autocomplete?input=${encodeURIComponent(input)}&api_key=${apiKey}`;
+      const input = document.getElementById(inputId).value;
+      const apiKey = 'rxS3WOVB7zNbC0kvfLtpljJVa6lAqoIZpoqsytwU'; // Replace with your actual API key
+      const url = `https://api.olamaps.io/places/v1/autocomplete?input=${encodeURIComponent(input)}&api_key=${apiKey}`;
+  
+      fetch(url, {
+        method: 'GET',
+        headers: {
+          'X-Request-Id': 'YOUR_REQUEST_ID' // Replace with your request ID
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        const suggestions = document.getElementById(suggestionsId);
+        suggestions.innerHTML = ''; // Clear previous suggestions
+  
+        if (data.predictions && data.predictions.length > 0) {
+          data.predictions.forEach(prediction => {
+            const item = document.createElement('div');
+            item.className = 'suggestion-item';
+            item.textContent = prediction.description;
+            item.addEventListener('click', () => {
+              const lat = prediction.geometry.location.lat;
+              const lng = prediction.geometry.location.lng;
+              
+              // Store coordinates
+              const coordinates = { latitude: lat, longitude: lng };
+              
+              // Call function to write coordinates to file
+              writeCoordinatesToFile(coordinates);
+  
+              // ... rest of your existing code ...
+  
+              suggestions.innerHTML = ''; // Clear suggestions after selection
+            });
+            suggestions.appendChild(item);
+          });
+        } else {
+          const item = document.createElement('div');
+          item.className = 'suggestion-item';
+          item.textContent = 'No results found';
+          suggestions.appendChild(item);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+    }, 300)); // Debounce delay of 300ms
+  }
+  
 
-        fetch(url, {
-            method: 'GET',
-            headers: {
-                'X-Request-Id': 'YOUR_REQUEST_ID' // Replace with your request ID
-            }
-        })
+
+//let x_coordinates = [88.48984775052655, 22.560128244259160];
+//let y_coordinates = [88.48745859470952, 22.596744505519403];
+//let coordinates = [];
+      
+
+              
+function drawPolygon() {
+    console.log('Fetching the JSON file...');
+
+    fetch('data.json')
         .then(response => response.json())
         .then(data => {
-            const suggestions = document.getElementById(suggestionsId);
-            suggestions.innerHTML = ''; // Clear previous suggestions
-            if (data.predictions && data.predictions.length > 0) {
-                data.predictions.forEach(prediction => {
-                    const item = document.createElement('div');
-                    item.className = 'suggestion-item';
-                    item.textContent = prediction.description;
-                    item.addEventListener('click', () => {
-                        const lat = prediction.geometry.location.lat;
-                        const lng = prediction.geometry.location.lng;
-                        myMap.flyTo({center: [lng, lat], zoom: 15});
-                        
-                        const marker = olaMaps
-                            .addMarker({
-                                offset: [0, 6],
-                                anchor: 'bottom',
-                                color: markers.length === 0 ? 'red' : 'blue',
-                            })
-                            .setLngLat([lng, lat])
-                            .addTo(myMap);
-                
-                        markers.push(marker);
-                
-                        if (markers.length > 2) {
-                            markers[0].remove(); // Remove the oldest marker
-                            markers.shift(); // Remove the oldest marker from the array
-                        }
-                
-                        if (inputId === 'autocomplete-input-1') {
-                            startLocation = [lat, lng];
-                            for_coor1 = [lng, lat];
-                        } else if (inputId === 'autocomplete-input-2') {
-                            endLocation = [lat, lng];
-                            for_coor2 = [lng, lat];
-                        }
-                
-                        // Calculate route if both start and end locations are set
-                        if (startLocation && endLocation) {
-                            calculateRoute(startLocation, endLocation);
-                        }
+            console.log('Parsing the JSON data...');
+            const x = data; // Ensure this is an array of coordinates
 
-                        suggestions.innerHTML = ''; // Clear suggestions after selection
-                    });
-                    suggestions.appendChild(item);
-                });
-            } else {
-                const item = document.createElement('div');
-                item.className = 'suggestion-item';
-                item.textContent = 'No results found';
-                suggestions.appendChild(item);
+            console.log('Data:', x); // Output the array to verify
+
+            // Add source and layer directly, assuming the map is already loaded
+            if (myMap.getSource('route')) {
+                myMap.removeLayer('route');
+                myMap.removeSource('route');
             }
+
+            myMap.addSource('route', {
+                type: 'geojson',
+                data: {
+                    type: 'Feature',
+                    properties: {},
+                    geometry: {
+                        type: 'LineString',
+                        coordinates: x,
+                    },
+                },
+            });
+
+            myMap.addLayer({
+                id: 'route',
+                type: 'line',
+                source: 'route',
+                layout: { 'line-join': 'round', 'line-cap': 'round' },
+                paint: {
+                    'line-color': '#f00',
+                    'line-width': 4,
+                },
+            });
         })
-        .catch(error => {
-            console.error('Error:', error);
-        });
-    }, 300)); // Debounce delay of 300ms
+        .catch(error => console.error('Error:', error.message));
 }
+
+// Ensure the map is loaded before calling drawPolygon
+myMap.on('load', function() {
+    document.getElementById('calculate-route-btn').disabled = false;
+});
+
 
 
 function calculateRoute(start, end) {

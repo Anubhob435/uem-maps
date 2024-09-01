@@ -151,7 +151,7 @@
         }
         #side-panel h2 {
             margin-bottom: 20px;
-            text-align: center;
+            text-align: left;
         }
         #side-panel input {
             width: 90%;
@@ -211,7 +211,7 @@
             transform: scale(1.1);
         }
 
-        #toggle-dark-mode {
+        #toggle-dark-mode{
             position: fixed;
             top: 180px;
             right: 15px;
@@ -290,6 +290,34 @@
             background-color: #0056b3;
             transform: scale(1.05);
         }
+
+        #calculate-route-btn {
+            position: fixed;
+            top: 230px;
+            right: 15px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #3f3f3f;
+            color: white;
+            border: none;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s, transform 0.3s;
+            z-index: 1000;
+}
+
+#calculate-route-btn:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Darker shadow on hover */
+}
+
+
+
     </style>
 </head>
 <body>
@@ -298,18 +326,22 @@
     </div>
 
     <div id="side-panel">
-        <h2>Route Planner</h2>
+        <h2>UEMxMaps</h2>
         <input type="text" id="autocomplete-input-1" placeholder="Destination 1">
         <div id="suggestions-1" class="suggestions"></div>
         <input type="text" id="autocomplete-input-2" placeholder="Destination 2">
         <div id="suggestions-2" class="suggestions"></div>
-        <button id="calculate-route-btn">Calculate Route</button>
+        
         <button class="uem-maps-btn" onclick="window.location.href='index.html'">Home</button>
     </div>
 
     <button id="toggle-panel-btn">☰</button>
     <button id="go-back-btn">O</button>
     <button id="toggle-dark-mode" onclick="toggleMapStyle()">🌙</button>
+    <button id="calculate-route-btn" onclick="drawPolygon()">📍</button>
+
+
+    
 
 
     <div id="map" style="display: none;"></div>
@@ -318,7 +350,7 @@
 
     <div id="coordinates"></div>
 
-    <script src="./OlaMapsWebSDK/olamaps-js-sdk.umd.js"></script>
+    <script src="/OlaMapsWebSDK/olamaps-js-sdk.umd.js"></script>
     <script src="script.js"></script>
     <script>
         const sidePanel = document.getElementById('side-panel');

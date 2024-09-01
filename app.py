@@ -1,42 +1,58 @@
-import requests
-import googlemaps
+from flask import Flask, request, jsonify
+import mysql.connector
+from werkzeug.security import generate_password_hash, check_password_hash
 
-# Define the API endpoint and parameters
-url = "https://api.olamaps.io/routing/v1/directions"
-api_key = "rxS3WOVB7zNbC0kvfLtpljJVa6lAqoIZpoqsytwU"  # Replace with your actual API key
-x_request_id = "your_request_id_here"  # Replace with your actual request ID
+app = Flask(__name__)
 
-# Parameters without waypoints
-params = {
-    'origin': '18.76029027465273,73.3814242364375',
-    'destination': '18.73354223011708,73.44587966939002',
-    'api_key': api_key
-}
+# Database configuration
+db = mysql.connector.connect(
+    host="buh89x1pi8cgvaw4161i-mysql.services.clever-cloud.com",
+    user="ucwyejivetooukiz",
+    password="aAo8DieytbUo0FiYV4RY",
+    database="buh89x1pi8cgvaw4161i"
+)
 
-# Headers
-headers = {
-    'X-Request-Id': x_request_id
-}
+@app.route('/api/login', methods=['POST'])
+def login():
+    data = request.json
+    username = data['username']
+    password = data['password']
 
-# Make the POST request
-response = requests.post(url, headers=headers, params=params)
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+    user = cursor.fetchone()
 
-# Check if the request was successful
-if response.status_code == 200:
-    # Parse the JSON response
-    data = response.json()
-    overview_polyline = data['routes'][0]['overview_polyline']
-    decoded_points = googlemaps.convert.decode_polyline(overview_polyline)
-    for point in decoded_points:
-        print((point['lng'], point['lat']))
-        print(type(point))
-    print(type(decoded_points))
+    if user and check_password_hash(user['password'], password):
+        return jsonify({"success": True, "message": "Login successful"}), 200
+    else:
+        return jsonify({"success": False, "message": "Invalid credentials"}), 401
 
-    #print(overview_polyline)
-    #print(data)  # Display the output
+@app.route('/api/register', methods=['POST'])
+def register():
+    data = request.json
+    username = data['username']
+    password = data['password']
+    role = data.get('role', 'user')  # Default role is 'user'
+    first_name = data.get('first_name', '')
+    last_name = data.get('last_name', '')
+    email = data.get('email', '')
+    phone_number = data.get('phone_number', '')
 
-else:
-    print(f"Request failed with status code: {response.status_code}")
-    print(response.text)  # Display the error message
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+    user = cursor.fetchone()
 
+    if user:
+        return jsonify({"success": False, "message": "Username already exists"}), 400
+    else:
+        hashed_password = generate_password_hash(password, method='sha256')
+        cursor.execute("""
+            INSERT INTO users (username, password, role, first_name, last_name, email, phone_number)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (username, hashed_password, role, first_name, last_name, email, phone_number))
+        db.commit()
 
+        return jsonify({"success": True, "message": "User registered successfully"}), 201
+
+if __name__ == '__main__':
+    app.run(debug=True)
